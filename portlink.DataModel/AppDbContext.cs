@@ -1,40 +1,36 @@
 ﻿using System;
-using System.Collections.Generic; 
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-
 
 namespace portlink.DataModel
 {
     public class AppDbContext : DbContext
     {
-      
+        // Add a constructor that accepts DbContextOptions<AppDbContext>
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
+
+        // DbSets for the application
         public DbSet<User> Users { get; set; }
         public DbSet<Port> Ports { get; set; }
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Booking> Bookings { get; set; }
-        public DbSet<Tracking> Tracking { get; set; }
+        public DbSet<Tracking> Trackings { get; set; }
 
-      
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Server=ADMIN\\SQLEXPRESS;" +
-                                        "Database=Portlink_Entprog;Integrated Security=SSPI;" +
-                                        "TrustServerCertificate=true");
-        }
+        // This DbSet for CargoRequests has been removed.
 
-       
+        // Remove the OnConfiguring method.
+        // The configuration is now handled in Program.cs and passed through the constructor.
+
+        // Configuring model relationships
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-          
             modelBuilder.Entity<Booking>()
-                .HasOne(b => b.Tracking)   
-                .WithOne(t => t.Booking)    
-                .HasForeignKey<Tracking>(t => t.BookingID); 
+                .HasOne(b => b.Tracking)
+                .WithOne(t => t.Booking)
+                .HasForeignKey<Tracking>(t => t.BookingID);
 
-           
             base.OnModelCreating(modelBuilder);
         }
     }
