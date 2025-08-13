@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using portlink.Models;
+using portlink.DataModel;
 
 namespace portlink.DataModel
 {
@@ -15,7 +15,7 @@ namespace portlink.DataModel
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Tracking> Trackings { get; set; }
-        public DbSet<DeliveryRequest> DeliveryRequests { get; set; }
+      
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -9,7 +9,6 @@
         <h2 class="text-center">Login</h2>
         <hr />
 
-        @*  *@
         @if (ViewBag.Error != null)
         {
             <div class="alert alert-danger" role="alert">
@@ -17,7 +16,6 @@
             </div>
         }
 
-        @*  *@
         @if (TempData["SuccessMessage"] != null)
         {
             <div class="alert alert-success" role="alert">
@@ -34,7 +32,36 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" class="form-control" required />
             </div>
-            <button type="submit" class="btn btn-primary btn-block mt-3">Log in</button>
+            <button type="submit" class="btn btn-outline-dark btn-block mt-3 login-btn">Log in</button>
         </form>
+
+        <div class="text-center mt-3">
+            <span>Don't have an account? </span>
+            <a asp-controller="Account" asp-action="Register" class="signup-link">Sign up!</a>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Sign up link style */
+    .signup-link {
+        color: black;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.2s ease-in-out;
+    }
+
+        .signup-link:hover {
+            color: #555;
+            text-decoration: none;
+        }
+
+    /* Login button hover effect (matches register button) */
+    .login-btn {
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .login-btn:hover {
+            transform: scale(1.05);
+        }
+</style>

@@ -4,5 +4,24 @@
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="Testing</a>.</p>
+    <h1 class="display-4">to</h1>
+
+    <h1 class="display-4">PortLink</h1>
+
+   
+
+   
+    @{
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    }
+
+    @if (!(currentController == "Account" && (currentAction == "Login" || currentAction == "Register")))
+    {
+        <div class="d-flex flex-column align-items-center mt-4">
+            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-dark mb-2" style="width: 150px;">Login</a>
+            <a asp-controller="Account" asp-action="Register" class="btn btn-outline-dark" style="width: 150px;">Register</a>
+        </div>
+    }
+
 </div>
