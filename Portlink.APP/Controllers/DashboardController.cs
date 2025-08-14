@@ -15,21 +15,21 @@ namespace Portlink.APP.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var userType = HttpContext.Session.GetString("UserType");
             var userId = HttpContext.Session.GetInt32("UserId");
+            var userType = HttpContext.Session.GetString("UserType");
 
-            if (string.IsNullOrEmpty(userType) || userId == null)
+            if (userId == null || userType == null)
             {
                 return RedirectToAction("Login", "Account");
             }
 
-            // Redirect to role-specific dashboard
+            // Redirect to appropriate dashboard based on user role
             switch (userType.ToLower())
             {
-                case "port":
-                    return RedirectToAction("PortDashboard");
                 case "trucker":
                     return RedirectToAction("TruckerDashboard");
+                case "port":
+                    return RedirectToAction("PortDashboard");
                 case "warehouse":
                     return RedirectToAction("WarehouseDashboard");
                 default:
@@ -37,32 +37,6 @@ namespace Portlink.APP.Controllers
             }
         }
 
-        // Port Authority Dashboard
-        public async Task<IActionResult> PortDashboard()
-        {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            // Get port's schedules and bookings
-            var bookings = await _context.Bookings
-                .Include(b => b.User)
-                .Include(b => b.Schedule)
-                .ThenInclude(s => s.Port)
-                .Where(b => b.Schedule.Port.PortName.Contains("Port")) // Adjust this logic
-                .OrderBy(b => b.BookingDate)
-                .ToListAsync();
-
-            ViewBag.UserType = "Port";
-            ViewBag.TotalBookings = bookings.Count;
-            ViewBag.PendingBookings = bookings.Count(b => b.Status == "Pending");
-
-            return View("PortDashboard", bookings);
-        }
-
-        // Trucker Dashboard
         public async Task<IActionResult> TruckerDashboard()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -71,31 +45,57 @@ namespace Portlink.APP.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // Get trucker's bookings
-            var myBookings = await _context.Bookings
+            // Get available deliveries for trucker
+            var availableBookings = await _context.Bookings
+                .Include(b => b.Schedule)
+                .ThenInclude(s => s.Port)
+                .Include(b => b.User)
+                .Where(b => b.Status == "Confirmed")
+                .OrderBy(b => b.BookingDate)
+                .ToListAsync();
+
+            var truckerBookings = await _context.Bookings
                 .Include(b => b.Schedule)
                 .ThenInclude(s => s.Port)
                 .Where(b => b.UserID == userId.Value)
                 .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
 
-            // Get available schedules
-            var availableSchedules = await _context.Schedules
-                .Include(s => s.Port)
-                .Where(s => s.Status == "Available" && s.AvailableDate >= DateTime.Today)
-                .OrderBy(s => s.AvailableDate)
-                .Take(10)
-                .ToListAsync();
+            ViewBag.AvailableDeliveries = availableBookings;
+            ViewBag.MyBookings = truckerBookings;
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
 
-            ViewBag.UserType = "Trucker";
-            ViewBag.TotalBookings = myBookings.Count;
-            ViewBag.AvailableSlots = availableSchedules.Count;
-            ViewBag.AvailableSchedules = availableSchedules;
-
-            return View("TruckerDashboard", myBookings);
+            return View();
         }
 
-        // Warehouse Dashboard
+        public async Task<IActionResult> PortDashboard()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Get all bookings for port overview
+            var todaysBookings = await _context.Bookings
+                .Include(b => b.User)
+                .Include(b => b.Schedule)
+                .ThenInclude(s => s.Port)
+                .Where(b => b.BookingDate.Date == DateTime.Today)
+                .OrderBy(b => b.BookingDate)
+                .ToListAsync();
+
+            var ports = await _context.Ports.ToListAsync();
+
+            ViewBag.TodaysBookings = todaysBookings;
+            ViewBag.TotalBookings = todaysBookings.Count;
+            ViewBag.PendingBookings = todaysBookings.Count(b => b.Status == "Pending");
+            ViewBag.Ports = ports;
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
+
+            return View();
+        }
+
         public async Task<IActionResult> WarehouseDashboard()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -104,20 +104,23 @@ namespace Portlink.APP.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // Get warehouse-related bookings
+            // Get warehouse orders and tracking
             var warehouseBookings = await _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Schedule)
                 .ThenInclude(s => s.Port)
-                .Where(b => b.DropOff.Contains("Warehouse") || b.Status == "In Transit")
-                .OrderBy(b => b.BookingDate)
+                .Include(b => b.Tracking)
+                .Where(b => b.UserID == userId.Value)
+                .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
 
-            ViewBag.UserType = "Warehouse";
-            ViewBag.IncomingDeliveries = warehouseBookings.Count(b => b.Status == "Confirmed");
-            ViewBag.InTransit = warehouseBookings.Count(b => b.Status == "In Transit");
+            ViewBag.MyOrders = warehouseBookings;
+            ViewBag.PendingOrders = warehouseBookings.Count(b => b.Status == "Pending");
+            ViewBag.CompletedOrders = warehouseBookings.Count(b => b.Status == "Completed");
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
 
-            return View("WarehouseDashboard", warehouseBookings);
+            return View();
         }
     }
 }
+

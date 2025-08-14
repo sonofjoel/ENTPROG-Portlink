@@ -25,6 +25,14 @@ namespace Portlink.APP.Controllers
                 .Include(p => p.Schedules)
                 .FirstOrDefaultAsync(p => p.PortID == id);
             return View(port);
+
+            if (port == null)
+            {
+                return NotFound();
+            }
+
+            return View(port);
         }
+
     }
 }
